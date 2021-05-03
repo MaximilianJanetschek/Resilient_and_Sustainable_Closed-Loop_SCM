@@ -1,0 +1,3 @@
+# Resilient_and_Sustainable_Closed-Loop_SCM
+
+The start of sth great ...
