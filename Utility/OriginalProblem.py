@@ -8,7 +8,7 @@ def create_payoff_table (number_obj_functions: int)-> list():
     SingleObjectiveModel = gb.Model('Single Objective Model')
 
     # add decision variables
-    x = SingleObjectiveModel.addVars(decision_x)
+    x = SingleObjectiveModel.addVars(decision_x, vtype=gb.GRB.INTEGER, name="x")
 
     # add constrains
     SingleObjectiveModel.addConstr(x[1] <= 20)
@@ -17,7 +17,7 @@ def create_payoff_table (number_obj_functions: int)-> list():
 
     # add objective function
     obj1 = gb.LinExpr()
-    obj1 = 1*x[1]
+    obj1 += 1*x[1]
 
 
 
@@ -31,7 +31,7 @@ def create_payoff_table (number_obj_functions: int)-> list():
     limit = SingleObjectiveModel.objVal
     SingleObjectiveModel.addConstr(x[1] == limit, 'additional constraint')
     obj2 = gb.LinExpr()
-    obj2 = 3*x[1] + 4*x[2]
+    obj2 += 3*x[1] + 4*x[2]
     SingleObjectiveModel.setObjective(obj2, gb.GRB.MAXIMIZE)
     SingleObjectiveModel.update()
     SingleObjectiveModel.optimize()
@@ -48,10 +48,12 @@ def create_payoff_table (number_obj_functions: int)-> list():
     SingleObjectiveModel.optimize()
     payoff_table[1][1] = SingleObjectiveModel.objVal
     limit = SingleObjectiveModel.objVal
-    SingleObjectiveModel.addConstr(obj2 == limit)
+    SingleObjectiveModel.addConstr(obj2 == limit, 'additional constraint')
     SingleObjectiveModel.setObjective(obj1, gb.GRB.MAXIMIZE)
     SingleObjectiveModel.update()
     SingleObjectiveModel.optimize()
+
+    SingleObjectiveModel.remove(SingleObjectiveModel.getConstrByName('additional constraint'))
 
     payoff_table[1][0] = SingleObjectiveModel.objVal
 
@@ -83,9 +85,9 @@ def get_grid_points(ranges, number_of_grid_points) -> list():
 
     for i in range(len(ranges)):
         obj_range = ranges[i]
-        intervall = obj_range['range'] / (number_of_grid_points-1)
+        intervall = obj_range['range'] / (number_of_grid_points[i]-1)
         add_point = obj_range['lb']
-        for j in range(number_of_grid_points):
+        for j in range(int(number_of_grid_points[i])):
             grid_points[i].append(add_point)
             add_point += intervall
 
@@ -94,15 +96,26 @@ def get_grid_points(ranges, number_of_grid_points) -> list():
 
 def solveProblemP (P:ModelP.OptimizationModel, ranges, grid_points) -> list():
 
-    obj = P.obj1 + P.eps *(P.S[2]/ranges[1]['range'])
+    P.SingleObjectiveModel.getConstrByName('first constraint')
+    obj = gb.LinExpr()
+    obj += P.obj1
+    obj_help = gb.LinExpr()
+    for i in range(P.number_of_obj_functions):
+        superscript = -(i-1)
+        obj_help += P.S[i+1]/ranges[i]['range']
+    obj += P.eps * obj_help
 
-    P.SingleObjectiveModel.addConstr(P.obj2 - P.S[2] == grid_points, 'additional constraint')
-
+    P.SingleObjectiveModel.addConstr(3*P.x[1] + 4*P.x[2] - P.S[2] == grid_points, 'additional constraint')
 
     P.SingleObjectiveModel.setObjective(obj, gb.GRB.MAXIMIZE)
     P.SingleObjectiveModel.setParam('LogToConsole',0)
     P.SingleObjectiveModel.update()
     P.SingleObjectiveModel.optimize()
+    print(grid_points)
+    #print(P.SingleObjectiveModel.objVal)
+    print(P.S[2])
+    print(P.x[1])
+    print(P.x[2])
 
     P.SingleObjectiveModel.remove(P.SingleObjectiveModel.getConstrByName('additional constraint'))
 
