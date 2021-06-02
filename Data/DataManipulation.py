@@ -4,6 +4,15 @@
 # summarize into landkreise as only 126 remain -> should be reasonable to model market
 import csv
 
+
+
+
+
+
+
+
+
+
 def get_population_by_district() -> dict():
     plz_dict = {}
 
@@ -38,6 +47,8 @@ def get_population_by_district() -> dict():
     print(quick_test)
 
     return district_population
+
+
 
 
 
