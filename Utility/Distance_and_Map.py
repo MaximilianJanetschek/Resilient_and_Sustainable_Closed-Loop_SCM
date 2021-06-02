@@ -32,6 +32,7 @@ print(locations)
 
 ham_zur = gmaps.distance_matrix(origins=locations.origin[0], destinations=locations.destination[0],
                      mode='driving')
+print('test')
 print(ham_zur)
 ham_zur['rows']
 ham_zur['rows'][0]
