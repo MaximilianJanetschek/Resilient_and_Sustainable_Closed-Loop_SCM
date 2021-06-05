@@ -4,7 +4,7 @@ import Data.DataManipulation as DM
 
 # get customer locations
 customer_dict = DM.get_population_by_district()
-print(customer_dict)
+print(len(customer_dict.keys()))
 
 key = ''
 gmaps = googlemaps.Client(key)

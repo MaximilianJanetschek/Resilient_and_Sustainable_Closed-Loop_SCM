@@ -46,3 +46,18 @@ locations['distance_m'] = [x['distance']['value'] for x in map_data]
 locations['durations_min'] = [x['duration']['value'] for x in map_data]
 locations.drop(['origin', 'destination'], axis=1, inplace=True)
 locations
+
+'''
+import requests
+
+response = requests.get('https://maps.googleapis.com/maps/api/geocode/json?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA')
+
+resp_json_payload = response.json()
+
+print(resp_json_payload['results'][0]['geometry']['location'])
+'''
+
+from geopy.geocoders import Nominatim
+geolocator = Nominatim(user_agent="example app")
+output = geolocator.geocode("86368 Deutschland").raw
+print(output['lat'], output['lon'], output['display_name'])
