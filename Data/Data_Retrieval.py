@@ -45,7 +45,7 @@ def initialize_sets():
         counter += 1
 
     # Recyclers
-    R = []
+    R = ["R-1-Brenz", "R-2-Wernigerode", "R-3-Bochum", "R-4-Bad Bibra", "R-5-Mülsen", "R-6-Löhneberg", "R-7-Neckarsulm", "R-8-Friedberg", "R-9-Fürstenzell"]
 
     # Tire Index
     P = ['Light-Vehicle']
@@ -108,17 +108,98 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
 
     # manufacturer distributor
     distanceManufacturerDistributor=  get_distance_manufacturer_distributors(A)
+    print(distanceManufacturerDistributor)
+    for s in S:
+        for p in P:
+            for (m,a) in distanceManufacturerDistributor:
+                T[p,m,a,s] = distanceManufacturerDistributor[m,a] / 1000
+
+    # distributor market
+    distanceDistributorMarket = get_distance_distributor_customer()
+    for s in S:
+        for p in P:
+            for (a,b) in distanceDistributorMarket:
+                T[p,a,b,s] = distanceDistributorMarket[a,b] / 1000
 
 
 
+    # market collector
+    distanceMarketCollector = get_distance_customer_collector(distanceDistributorMarket)
+    for s in S:
+        for p in P:
+            for (b,c) in distanceMarketCollector:
+                T[p,b,c,s] = distanceMarketCollector[b,c] / 1000
 
 
+    # collector recycling center
+    distanceCollectorRecycling = get_distance_collector_recycling(R)
+    for s in S:
+        for p in P:
+            for (c,r) in distanceCollectorRecycling:
+                T[p,c,r,s] = distanceCollectorRecycling[c,r] / 1000
 
+
+    # recycling manufacturer
+    distanceRecyclingManufacturer = get_distance_recycling_manufacturer(R)
+    print(distanceRecyclingManufacturer)
+    for s in S:
+        for (r,m) in distanceRecyclingManufacturer:
+            T[r,m,s] = distanceRecyclingManufacturer[r,m]
+
+    # Fixed Cost
     FC = {}
+    for m in M:
+        FC[m] = 0
+    for a in A:
+        FC[a] = 0
+
+    for c in C:
+        FC[c] = 0
+    for r in R:
+        FC[r] = 0
+
+    # capacity
     K = {}
+
+    for s in S:
+        # PS
+        for w in W:
+            for i in I:
+                K[w,i,s] = 0
+            for j in J:
+                K[w,j,s] = 0
+        for p in P:
+            for m in M:
+                K[p,m,s] = 0
+            for a in A:
+                K[p, a, s] = 0
+            for c in C:
+                K[p, c, s] = 0
+        for r in R:
+            K[r, s] = 0
+
+    # purchase prices
     U = {}
-    D = {}
+    for s in S:
+        for p in P:
+            for m in M:
+                U[p,m,s] = 0
+            for a in A:
+                U[p, a, s] = 0
+            for b in B:
+                U[p, b, s] = 0
+            for c in C:
+                U[p, c, s] = 0
+        for r in R:
+            U[r, s] = 0
+
+    # percentage scrapped
     alpha = {}
+    for s in S:
+        for r in R:
+            alpha[r,s] = 0
+
+    D = {}
     H = {}
     WU = {}
     EE = {}

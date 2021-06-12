@@ -131,6 +131,7 @@ def get_distance_distributor_customer() -> dict():
 
 
     else:
+        print("retrieve all distributor market data by google maps")
 
         # get customer locations
         customer_dict = get_population_by_district()
@@ -157,9 +158,13 @@ def get_distance_distributor_customer() -> dict():
                 print(str(counter)+ " / " + str(total)+ " with a distance of " + str(distance))
                 counter = counter + 1
 
-        pickle.dump(distanceMatrix, open("distanceMatrix.p", "wb"))
+        pickle.dump(distanceMatrix, open(filePath, "wb"))
+    return_distanceMatrix = {}
+    for d in distanceMatrix.keys():
+        for m in distanceMatrix[d].keys():
+            return_distanceMatrix[d,m] = distanceMatrix[d][m]["rows"][0]['elements'][0]['distance']['value']
 
-    return distanceMatrix
+    return return_distanceMatrix
 
 def get_distance_supplier_manufacturer():
 
@@ -202,20 +207,79 @@ def get_distance_manufacturer_distributors(distributors):
                         "M 3, Otrokovice, Tschechien": "Otrokovice, Tschechien",
                         "M 4, Puchov, Slowakai": "Puchov, Slowakai"}
         distributor_location = get_distributor_locations()
-        print(distributor_location)
 
         gmaps = googlemaps.Client(get_google_maps_key())
-
+        distanceMatrix = {}
         for distributor in distributors:
             d = int(distributor.split("-")[3])
             distributor_coordinates = str(distributor_location[d]['lat'])+", "+str(distributor_location[d]['lon'])
-            distanceMatrix = {}
+
             for m in manufacturer.keys():
                 distance = gmaps.distance_matrix(origins=distributor_coordinates, destinations=manufacturer[m],
                                  mode='driving')
                 distanceMatrix[m,d] = distance["rows"][0]['elements'][0]['distance']['value']
 
-        pickle.dump(distanceMatrix, open("distanceMatrix.p", "wb"))
+        pickle.dump(distanceMatrix, open(filePath, "wb"))
+
+    return distanceMatrix
+
+def get_distance_customer_collector(distanceDistributorMarket):
+    distanceMatrix = {}
+    for (d,c) in distanceDistributorMarket:
+        distanceMatrix[c,d] = distanceDistributorMarket[d,c]
+
+    return distanceMatrix
+
+def get_distance_collector_recycling(recycling_stations):
+
+    filePath = "distanceMatrixCollectorsRecycling.p"
+
+    if os.path.exists(filePath):
+        distanceMatrix = pickle.load(open(filePath, "rb"))
+
+    else:
+        collector_locations = get_distributor_locations()
+
+        gmaps = googlemaps.Client(get_google_maps_key())
+        distanceMatrix = {}
+        print(recycling_stations)
+        for recycling in recycling_stations:
+            r = recycling.split("-")[2] + ", Germany"
+
+            for c in collector_locations.keys():
+                collector_coordinates = str(collector_locations[c]['lat']) + ", " + str(
+                    collector_locations[c]['lon'])
+                distance = gmaps.distance_matrix(origins=collector_coordinates, destinations=r,
+                                 mode='driving')
+                distanceMatrix[c,r] = distance["rows"][0]['elements'][0]['distance']['value']
+
+        pickle.dump(distanceMatrix, open(filePath, "wb"))
+
+    return distanceMatrix
+
+def get_distance_recycling_manufacturer(recycling_stations):
+    filePath = "distanceMatrixRecyclingManufacturer.p"
+    manufacturer = {"M 1, Hannover, Germany": "Hannover, Germany",
+                    "M 2, Korbach, Germany": "Korbach, Germany",
+                    "M 3, Otrokovice, Tschechien": "Otrokovice, Tschechien",
+                    "M 4, Puchov, Slowakai": "Puchov, Slowakai"}
+
+    if os.path.exists(filePath):
+        distanceMatrix = pickle.load(open(filePath, "rb"))
+
+    else:
+
+        gmaps = googlemaps.Client(get_google_maps_key())
+        distanceMatrix = {}
+        print(recycling_stations)
+        for recycling in recycling_stations:
+            r = recycling.split("-")[2] + ", Germany"
+            for m in manufacturer.keys():
+                distance = gmaps.distance_matrix(origins=r, destinations=manufacturer[m],
+                                 mode='driving')
+                distanceMatrix[r,m] = distance["rows"][0]['elements'][0]['distance']['value']
+
+        pickle.dump(distanceMatrix, open(filePath, "wb"))
 
     return distanceMatrix
 
@@ -223,7 +287,7 @@ def get_distance_manufacturer_distributors(distributors):
 def get_google_maps_key():
     key = ''
     if key == '':
-        print('Enter the Google API Idiot!')
+        print('Please Enter a Key to use Google Maps plug in')
         raise ValueError
     return key
 
