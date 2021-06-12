@@ -45,19 +45,12 @@ def get_distributor_locations() -> list():
     pickle.dump(locations, open("locations.p", "wb"))
 
 
-
-
-
-
-
-
-
 def get_population_by_district() -> dict():
     plz_dict = get_plz_city_district()
 
     # retrieve all plz and area names
 
-    with open('zuordnung_plz_ort_landkreis.csv', newline='') as csvfile:
+    with open('Data/zuordnung_plz_ort_landkreis.csv', newline='') as csvfile:
         zip_code_city = csv.DictReader(csvfile, delimiter=',')
         for row in zip_code_city:
             plz_dict[row['plz']] = {'landkreis':row['landkreis'], 'population':0}
@@ -73,18 +66,23 @@ def get_population_by_district() -> dict():
         else:
             district_population[zipcode['landkreis']] = zipcode['population']
 
-    quick_test = 0
-    for i in district_population.values():
-        quick_test = quick_test + i
-
-    print(quick_test)
+    total_districts = sum_population(district_population)
+    print(total_districts)
 
     return district_population
+
+def sum_population(district_population):
+    total_population = 0
+    for i in district_population.values():
+        total_population = total_population + i
+
+
+    return total_population
 
 
 def get_plz_einwohner(plz_dict:dict()) -> dict():
     # get citizens per zip code
-    with open ('plz_einwohner.csv', newline='') as csvfile:
+    with open ('Data/plz_einwohner.csv', newline='') as csvfile:
         plz_einwohner = csv.DictReader(csvfile, delimiter= ',')
         for row in plz_einwohner:
             if row['plz'] in plz_dict.keys():
@@ -95,7 +93,7 @@ def get_plz_einwohner(plz_dict:dict()) -> dict():
 
 def get_plz_city_district() -> dict():
     plz_dict = {}
-    with open('zuordnung_plz_ort_landkreis.csv', newline='') as csvfile:
+    with open('Data/zuordnung_plz_ort_landkreis.csv', newline='') as csvfile:
         zip_code_city = csv.DictReader(csvfile, delimiter=',')
         for row in zip_code_city:
             plz_dict[row['plz']] = {'landkreis':row['landkreis'], 'population':0}
@@ -104,7 +102,7 @@ def get_plz_city_district() -> dict():
 
 
 def get_distributor_locations() -> dict():
-    filePath = "distributor_locations.p"
+    filePath = "Data/distributor_locations.p"
     if os.path.exists(filePath):
         distributor_locations = pickle.load(open(filePath, "rb"))
     else:
@@ -124,7 +122,7 @@ def get_distributor_locations() -> dict():
 
 def get_distance_distributor_customer() -> dict():
 
-    filePath = "distanceMatrix.p"
+    filePath = "Data/distanceMatrix.p"
 
     if os.path.exists(filePath):
         distanceMatrix = pickle.load(open(filePath, "rb"))
@@ -168,7 +166,7 @@ def get_distance_distributor_customer() -> dict():
 
 def get_distance_supplier_manufacturer():
 
-    filePath = "distanceMatrixSupplierManufacturer.p"
+    filePath = "Data/distanceMatrixSupplierManufacturer.p"
 
     if os.path.exists(filePath):
         distanceMatrix = pickle.load(open(filePath, "rb"))
@@ -197,7 +195,7 @@ def get_distance_supplier_manufacturer():
 def get_distance_manufacturer_distributors(distributors):
 
 
-    filePath = "distanceMatrixManufacturerSupplier.p"
+    filePath = "Data/distanceMatrixManufacturerSupplier.p"
 
     if os.path.exists(filePath):
         distanceMatrix = pickle.load(open(filePath, "rb"))
@@ -232,7 +230,7 @@ def get_distance_customer_collector(distanceDistributorMarket):
 
 def get_distance_collector_recycling(recycling_stations):
 
-    filePath = "distanceMatrixCollectorsRecycling.p"
+    filePath = "Data/distanceMatrixCollectorsRecycling.p"
 
     if os.path.exists(filePath):
         distanceMatrix = pickle.load(open(filePath, "rb"))
@@ -258,7 +256,7 @@ def get_distance_collector_recycling(recycling_stations):
     return distanceMatrix
 
 def get_distance_recycling_manufacturer(recycling_stations):
-    filePath = "distanceMatrixRecyclingManufacturer.p"
+    filePath = "Data/distanceMatrixRecyclingManufacturer.p"
     manufacturer = {"M 1, Hannover, Germany": "Hannover, Germany",
                     "M 2, Korbach, Germany": "Korbach, Germany",
                     "M 3, Otrokovice, Tschechien": "Otrokovice, Tschechien",

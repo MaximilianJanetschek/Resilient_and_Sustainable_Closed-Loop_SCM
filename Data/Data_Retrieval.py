@@ -1,23 +1,12 @@
 from Data.DataManipulation import *
 
 def initialize_sets():
-    I = []  # i Primary Supplier
-    J = []  # j Backup Supplier
-    M = []  # m manufacturers
-    A = []  # a distributors
-    B = []  # b markets
-    C = []  # c collectors
-    R = []  # r recyclers
-    P = []  # p tire index
-    W = []  # w raw material
-    S = []  # s distribution scenario
-    F = []  # f information shared
 
     # Primary Supplier
     I = ['PS_1','PS_2','PS_3']
 
     # Backup Supplier
-    J = ['PS_1', 'PS_2', 'PS_3']
+    J = ['BS_1', 'BS_2', 'BS_3']
 
     # Manufacturer
     M = ["M 1, Hannover, Germany", "M 2, Korbach, Germany", "M 3, Otrokovice, Tschechien", "M 4, Puchov, Slowakai"]
@@ -61,14 +50,27 @@ def initialize_sets():
 
     return [I,J,M,A,B,C,R,P,W,S,F]
 
+def get_parameters(I,J,M,A,B,C,R,P,W,S,F):
+    filePath = "Data/parameters.p"
+
+    if os.path.exists(filePath):
+        parameters = pickle.load(open(filePath, "rb"))
+
+    else:
+        parameters = initialize_parameters(I,J,M,A,B,C,R,P,W,S,F)
+        pickle.dump(parameters, open(filePath, "wb"))
+
+    return parameters
+
+
 def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
     RC = {}
     # raw data prices
     for w in W:
         for i in I:
-            RC[(w,i)] = 0
+            RC[w,i] = 0
         for j in J:
-            RC[(w, j)] = 0
+            RC[w, j] = 0
 
     # Fixed cost of contracting supplier
     CC = {}
@@ -80,11 +82,14 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
     # Production Cost of tire type p
     LC = {}
     for p in P:
-        LC[p] = 0
+        for m in M:
+            LC[p,m] = 0
 
-    p = {}  # disruption probability in scenario s
+    prob = {}  # disruption probability in scenario s
     for s in S:
-        p[s] = 1/ len(S)
+        prob[s] = round(1 / len(S),4)
+        print(prob[s])
+
 
     # disrupted capacitz of PS
     N = {}
@@ -199,35 +204,140 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
         for r in R:
             alpha[r,s] = 0
 
+    # demand of market b
+    customer = get_population_by_district()
+    total_population = sum_population(customer)
+    total_demand = 5208606
+
     D = {}
+    for s in S:
+        for p in P:
+            for b in customer.keys():
+                demand = total_demand * (customer[b] / total_population)
+                D[p,b,s] = round(demand,0)
+
+    # polution emitted
     H = {}
+    for s in S:
+        # on transport to manufacturer
+        for m in M:
+            # from primary supplier
+            for i in I:
+               H[i,m,s] = 0
+            # from backup supplier
+            for j in J:
+                H[j,m,s] = 0
+            # manufacturer to distributor
+            for a in A:
+                H[m,a,s] = 0
+
+        # distributor to market
+        for a in A:
+            for b in B:
+                H[a,b,s] = 0
+
+        # market to collector
+        for b in B:
+            for c in C:
+                H[b,c,s] = 0
+
+        # collector to recycler
+        for c in C:
+            for r in R:
+                H[c,r,s] = 0
+
+        # recycler to manufacturer
+        for r in R:
+            for m in M:
+                H[r,m,s] = 0
+
+    # water consumption
     WU = {}
+    for m in M:
+        WU[m] = 0
+    for r in R:
+        WU[r] = 0
+
+    # electric energy
     EE = {}
+    # manufacturer
+    for m in M:
+        EE[m] = 0
+    # recycler
+    for r in R:
+        EE[r] = 0
+
+    # pollution emitted
     PE = {}
+    for m in M:
+        PE[m] = 0
+    for r in R:
+        PE[r] = 0
+
+    # fixed jobs opportunities
     FJO = {}
+
+    # primary supplier
+    for i in I:
+        FJO[i] = 0
+    # backup supplier
+    for j in J:
+        FJO[j] = 0
+    # manufacturer
+    for m in M:
+        FJO[m] = 0
+
+    # distributor
+    for a in A:
+        FJO[a] = 0
+
+    # collector
+    for c in C:
+        FJO[c] = 0
+
+    # recycler
+    for r in R:
+        FJO[r] = 0
+
+
+    # variable job opportunities
     VJO = {}
+    for s in S:
+        # primary supplier
+        for i in I:
+            VJO[i,s] = 0
+
+        # backup supplier
+        for j in J:
+            VJO[j, s] = 0
+
+        # manufacturer
+        for m in M:
+            VJO[m, s] = 0
+
+        # distributor
+        for a in A:
+            VJO[a, s] = 0
+
+        # collector
+        for c in C:
+            VJO[c, s] = 0
+
+        # recycler
+        for r in R:
+            VJO[r, s] = 0
+
+    # establishment cost of information type f and information sharing center
     SC = {}
     IC = {}
     EX = {}
+    for s in S:
+        for f in F:
+            SC[f,s] = 0
+            IC[f,s] = 0
+            EX[f,s] = 0
 
-    return [RC, CC, LC, p,N,G,T,FC,K,U,D,alpha, H, WU,EE,PE,FJO,VJO,SC,IC,EX]
 
 
 
-
-
-
-I = []   # i Primary Supplier
-J = []   # j Backup Supplier
-M = []   # m manufacturers
-A = []   # a distributors
-B = []   # b markets
-C = []   # c collectors
-R = []   # r recyclers
-P = []   # p tire index
-W = []   # w raw material
-S = []   # s distribution scenario
-F = []   # f information shared
-
-[I,J,M,A,B,C,R,P,W,S,F] = initialize_sets()
-initialize_parameters(I,J,M,A,B,C,R,P,W,S,F)
+    return [RC, CC, LC, prob,N,G,T,FC,K,U,D,alpha, H, WU,EE,PE,FJO,VJO,SC,IC,EX]

@@ -5,36 +5,12 @@ from Data.Data_Retrieval import *
 
 # Data import
 ''' Index ''' # do not use 1,..,n rahter some unique such that parameters are hashable
-
 [I,J,M,A,B,C,R,P,W,S,F] = initialize_sets()
 
 
 
 ''' Parameters '''
-RC = {}
-CC = {}
-LC = {}
-p  = {}     # disruption probability in scenario s
-N  = {}
-G = {}
-T = {}
-FC = {}
-K = {}
-U = {}
-D = {}
-alpha = {}
-H = {}
-WU = {}
-EE = {}
-PE = {}
-FJO = {}
-VJO = {}
-SC = {}
-IC = {}
-EX = {}
-
-
-
+[RC, CC, LC, prob,N,G,T,FC,K,U,D,alpha, H, WU,EE,PE,FJO,VJO,SC,IC,EX] = get_parameters(I,J,M,A,B,C,R,P,W,S,F)
 
 
 
@@ -43,22 +19,30 @@ EX = {}
 SCM_Model = gurobi.Model('Resilient and Sustainable SCM')
 
 '''Decision Variables'''
-L = SCM_Model.addVars(P,M,S,vtype=gurobi.GRB.continuous, name="Production_Quantity")
+L = SCM_Model.addVars(P,M,S,vtype=gurobi.GRB.CONTINUOUS, name="Production_Quantity")
 
 Production_Variable = gurobi.tuplelist()
 Production_Variable += [(w,i,m,s) for w in W for i in I for m in M for s in S]
 Production_Variable += [(w,j,m,s) for w in W for j in J for m in M for s in S]
 Production_Variable += [(p,m,a,s) for p in P for m in M for a in A for s in S]
+Production_Variable += [(p,a,b,s) for p in P for a in A for b in B for s in S]
 Production_Variable += [(p,b,c,s) for p in P for b in B for c in C for s in S]
 Production_Variable += [(p,c,r,s) for p in P for c in C for r in R for s in S]
-Production_Variable += [(r,m,s) for r in R for m in M for s in S]
-Q = SCM_Model.addVars(Production_Variable,vtype=gurobi.GRB.continuous, name="RawMaterial_Transferred_PrimarySupplier")
+Production_Variable += [(r,m,s,"dummy") for r in R for m in M for s in S]
+seen = set()
+for key in Production_Variable:
+    if key in seen:
+        print(key)
+    else:
+        seen.add(key)
+
+Q = SCM_Model.addVars(Production_Variable,vtype=gurobi.GRB.CONTINUOUS, name="RawMaterial_Transferred_PrimarySupplier")
 
 
-V = SCM_Model.addVars(F,S,vtype=gurobi.GRB.continuous, name="Information_Visible")
+V = SCM_Model.addVars(F,S,vtype=gurobi.GRB.CONTINUOUS, name="Information_Visible")
 
-PS = SCM_Model.addVars(I,vtype=gurobi.GRB.continuous, name="PrimarySupplie")
-BS = SCM_Model.addVars(J,vtype=gurobi.GRB.continuous, name="BackupSupplier")
+PS = SCM_Model.addVars(I,vtype=gurobi.GRB.CONTINUOUS, name="PrimarySupplie")
+BS = SCM_Model.addVars(J,vtype=gurobi.GRB.CONTINUOUS, name="BackupSupplier")
 
 Established_Variable = gurobi.tuplelist()
 Established_Variable += [(m) for m in M]
@@ -66,10 +50,10 @@ Established_Variable += [(a) for a in A]
 Established_Variable += [(b) for b in B]
 Established_Variable += [(c) for c in C]
 Established_Variable += [(r) for r in R]
-E = SCM_Model.addVars(Established_Variable,vtype=gurobi.GRB.continuous, name="Established")
+E = SCM_Model.addVars(Established_Variable,vtype=gurobi.GRB.CONTINUOUS, name="Established")
 
-SCU = SCM_Model.addVars(F,vtype=gurobi.GRB.continuous, name="Information_Sharing_Center")
-IS = SCM_Model.addVars(F,vtype=gurobi.GRB.continuous, name="Information_Security_Center")
+SCU = SCM_Model.addVars(F,vtype=gurobi.GRB.CONTINUOUS, name="Information_Sharing_Center")
+IS = SCM_Model.addVars(F,vtype=gurobi.GRB.CONTINUOUS, name="Information_Security_Center")
 
 
 
@@ -81,33 +65,32 @@ obj_Economic = gurobi.LinExpr()
 # Fixed Cost
 obj_Economic_Fixed = gurobi.LinExpr()
 obj_Economic_Fixed += gurobi.quicksum(FC[m] * E[m] for m in M) + gurobi.quicksum(FC[a] * E[a] for a in A)
-+ gurobi.quicksum(FC[c] * E[c] for c in C) + gurobi.quicksum(FC[r] * E[r] for r in R)
-+gurobi.quicksum(CC[i] * PS[i] for i in I) + gurobi.quicksum(CC[i] * BS[i] for j in J)\
-+gurobi.quicksum(gurobi.quicksum(RC[w][i] * PS[i] for i in I)
-                 +gurobi.quicksum(RC[w][j] * BS[j] for j in J) for w in W)
+obj_Economic_Fixed += gurobi.quicksum(FC[c] * E[c] for c in C) + gurobi.quicksum(FC[r] * E[r] for r in R)+gurobi.quicksum(CC[i] * PS[i] for i in I) + gurobi.quicksum(CC[j] * BS[j] for j in J)
+obj_Economic_Fixed += gurobi.quicksum(gurobi.quicksum(RC[w,i] * PS[i] for i in I) + gurobi.quicksum(RC[w,j] * BS[j] for j in J) for w in W)
 
 # Variable Cost
 obj_Economic_Variable = gurobi.LinExpr()
-obj_Economic_Variable += gurobi.quicksum(p[s] *  gurobi.quicksum(IS[f]*IC[f,s]for f in F)
-                                        + gurobi.quicksum(SCU[f]*SC[f,s]for f in F) + gurobi.quicksum(gurobi.quicksum(L[p,m,s] *LC[p,m]for m in M)for p in P)
+
+obj_Economic_Variable += gurobi.quicksum(prob[s] * gurobi.quicksum(IS[f]*IC[f,s] for f in F)for s in S)
+obj_Economic_Variable +=  gurobi.quicksum(prob[s] * gurobi.quicksum(SCU[f]*SC[f,s]for f in F) + gurobi.quicksum(gurobi.quicksum(L[p,m,s] *LC[p,m]for m in M)for p in P)
                                          + gurobi.quicksum(gurobi.quicksum(gurobi.quicksum(U[p,m,s] * Q [p,m,a,s] for a in A) for m in M)for p in P)
                                          + gurobi.quicksum(gurobi.quicksum(gurobi.quicksum(U[p,a,s] * Q [p,a,b,s] for b in B) for a in A)for p in P)
-                                         + gurobi.quicksum(gurobi.quicksum(gurobi.quicksum(U[p,b,s] * Q [p,b,c,s] for c in C) for b in P)for p in P)
+                                         + gurobi.quicksum(gurobi.quicksum(gurobi.quicksum(U[p,b,s] * Q [p,b,c,s] for c in C) for b in B)for p in P)
                                          + gurobi.quicksum(gurobi.quicksum(gurobi.quicksum(U[p,c,s] * Q [p,c,r,s] for r in R) for c in C)for p in P)
-                                         + gurobi.quicksum(gurobi.quicksum(U[p,r,s] * Q [r,m,s] for m in M) for r in R)
+                                         + gurobi.quicksum(gurobi.quicksum(U[r,s] * Q [r,m,s,"dummy"] for m in M) for r in R)
 for s in S)
 
 
 # Transportation Cost
 obj_Economic_Transportation = gurobi.LinExpr()
-obj_Economic_Transportation += gurobi.quicksum( p[s]
+obj_Economic_Transportation += gurobi.quicksum( prob[s]
         + gurobi.quicksum(gurobi.quicksum(gurobi.quicksum(T[w,i,m,s] * Q [w,i,m,s] for m in M)for i in I)for w in W)
         +  gurobi.quicksum(gurobi.quicksum(gurobi.quicksum(T[w,j,m,s] * Q [w,j,m,s] for m in M)for j in J)for w in W)
         + gurobi.quicksum(gurobi.quicksum(gurobi.quicksum(T[p,m,a,s] * Q [p,m,a,s] for a in A)for m in M)for p in P)
         + gurobi.quicksum(gurobi.quicksum(gurobi.quicksum(T[p,a,b,s] * Q[p,a,b,s] for b in B) for a in A) for p in P)
 + gurobi.quicksum(gurobi.quicksum(gurobi.quicksum(T[p,b,c,s] * Q[p,b,c,s] for c in C) for b in B) for p in P)
 + gurobi.quicksum(gurobi.quicksum(gurobi.quicksum(T[p,c,r,s] * Q[p,c,r,s] for r in R) for c in C) for p in P)
-+ gurobi.quicksum(gurobi.quicksum(T[r,m,s] * Q[r,m,s] for r in R) for m in M)
++ gurobi.quicksum(gurobi.quicksum(T[r,m,s] * Q[r,m,s,"dummy"] for r in R) for m in M)
                                                 for s in S)
 
 
@@ -133,7 +116,7 @@ obj_Environmental_Pol_Transport += gurobi.quicksum(
     + gurobi.quicksum(H[a,b,s]*Q[p,a,b,s] for p in P for a in A for b in B)
     + gurobi.quicksum(H[b,c,s]*(Q[p,b,c,s]*alpha[p,b,s]) for p in P for b in B for c in C)
     + gurobi.quicksum(H[c,r,s]*Q[p,c,r,s] for p in P for c in C for r in R)
-    + gurobi.quicksum(H[r,m,s]*Q[r,m,s] for r in R for m in M)
+    + gurobi.quicksum(H[r,m,s]*Q[r,m,s,"dummy"] for r in R for m in M)
 
     for s in S
 )
@@ -157,7 +140,7 @@ obj_Social_Variable_Ops += gurobi.quicksum(
     + gurobi.quicksum(VJO[m,s] * (Q[p,m,a,s] / (K[p,m,s])) for m in M)
     + gurobi.quicksum(VJO[a, s] * (Q[p, a, b, s] / (K[p, a, s])) for a in A)
     + gurobi.quicksum(VJO[c, s] * (Q[p, c, r, s] / (K[p, c, s])) for c in C)
-    + gurobi.quicksum(VJO[r, s] * (Q[r, m, s] / (K[r, s])) for r in R)
+    + gurobi.quicksum(VJO[r, s] * (Q[r, m, s,"dummy"] / (K[r, s])) for r in R)
     for s in S
 )
 
@@ -172,7 +155,7 @@ obj_Social = obj_Social_Fixed_Ops + obj_Social_Variable_Ops
 for s in S:
     for m in M:
         SCM_Model.addConstr(
-            gurobi.quicksum( gurobi.quicksum((1-p[s]) * Q[w,i,m,s] for i in I) for w in W) +
+            gurobi.quicksum( gurobi.quicksum((1-prob[s]) * Q[w,i,m,s] for i in I) for w in W) +
             gurobi.quicksum(gurobi.quicksum(Q[w,j,m,s]for j in J)for w in W) == gurobi.quicksum(gurobi.quicksum(L[p,m,s]*G[w] for p in P)for w in W)
         )
 
@@ -215,7 +198,7 @@ for s in S:
         for r in R:
             SCM_Model.addConstr(
                 gurobi.quicksum(gurobi.quicksum(Q[p,c,r,s]for c in C)for p in P) ==
-                gurobi.quicksum(Q[r,m,s] for m in M)
+                gurobi.quicksum(Q[r,m,s,"dummy"] for m in M)
             )
 
 # capacity constraint
@@ -262,7 +245,7 @@ for s in S:
 
     for r in R:
         SCM_Model.addConstr(
-            gurobi.quicksum(Q[r,m,s] for m in M) <= K[r,s] * E[r]
+            gurobi.quicksum(Q[r,m,s,"dummy"] for m in M) <= K[r,s] * E[r]
         )
 
 # Visibilitz percent is the informatin shared through an informatioon sharing system
