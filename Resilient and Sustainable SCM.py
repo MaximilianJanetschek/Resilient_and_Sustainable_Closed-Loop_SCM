@@ -5,19 +5,8 @@ from Data.Data_Retrieval import *
 
 # Data import
 ''' Index ''' # do not use 1,..,n rahter some unique such that parameters are hashable
-I = []   # i Primary Supplier
-J = []   # j Backup Supplier
-M = []   # m manufacturers
-A = []   # a distributors
-B = []   # b markets
-C = []   # c collectors
-R = []   # r recyclers
-P = []   # p tire index
-W = []   # w raw material
-S = []   # s distribution scenario
-F = []   # f information shared
 
-initialize_sets(I,J,M,A,B,C,R,P,W,S,F)
+[I,J,M,A,B,C,R,P,W,S,F] = initialize_sets()
 
 
 
