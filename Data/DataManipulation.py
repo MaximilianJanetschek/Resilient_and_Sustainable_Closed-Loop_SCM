@@ -120,9 +120,9 @@ def get_distributor_locations() -> dict():
     return distributor_locations
 
 
-def get_distance_distributor_customer() -> dict():
+def get_distance_distributor_customer(distributors) -> dict():
 
-    filePath = "Data/distanceMatrix.p"
+    filePath = "Data/distanceMatrixDistributorCustomer.p"
 
     if os.path.exists(filePath):
         distanceMatrix = pickle.load(open(filePath, "rb"))
@@ -139,13 +139,15 @@ def get_distance_distributor_customer() -> dict():
 
         # assume Munich for distributor
         distanceMatrix = {}
-        distanceMatrix['Augsburg'] = {}
         counter = 1
 
         distributor_location = get_distributor_locations()
+        print(distributor_location)
 
         total = len(distributor_location.keys())*len(customer_dict.keys())
-        for distributor in distributor_location.keys():
+
+        for d in distributors:
+            distributor = int(d.split('-')[3])
             distributor_coordinates = str(distributor_location[distributor]['lat'])+", "+str(distributor_location[distributor]['lon'])
             distanceMatrix[distributor_coordinates] = {}
             for customer in customer_dict.keys():
@@ -158,9 +160,13 @@ def get_distance_distributor_customer() -> dict():
 
         pickle.dump(distanceMatrix, open(filePath, "wb"))
     return_distanceMatrix = {}
-    for d in distanceMatrix.keys():
-        for m in distanceMatrix[d].keys():
-            return_distanceMatrix[d,m] = distanceMatrix[d][m]["rows"][0]['elements'][0]['distance']['value']
+    distributor_location = get_distributor_locations()
+    for d in distributors:
+        distributor = int(d.split("-")[3])
+        distributor_coordinates = str(distributor_location[distributor]['lat']) + ", " + str(
+            distributor_location[distributor]['lon'])
+        for m in distanceMatrix[distributor_coordinates].keys():
+            return_distanceMatrix[d,m] = distanceMatrix[distributor_coordinates][m]["rows"][0]['elements'][0]['distance']['value']
 
     return return_distanceMatrix
 
@@ -215,20 +221,24 @@ def get_distance_manufacturer_distributors(distributors):
             for m in manufacturer.keys():
                 distance = gmaps.distance_matrix(origins=distributor_coordinates, destinations=manufacturer[m],
                                  mode='driving')
-                distanceMatrix[m,d] = distance["rows"][0]['elements'][0]['distance']['value']
+                distanceMatrix[m,distributor] = distance["rows"][0]['elements'][0]['distance']['value']
 
         pickle.dump(distanceMatrix, open(filePath, "wb"))
 
     return distanceMatrix
 
-def get_distance_customer_collector(distanceDistributorMarket):
+def get_distance_customer_collector(distanceDistributorMarket, collector):
     distanceMatrix = {}
-    for (d,c) in distanceDistributorMarket:
-        distanceMatrix[c,d] = distanceDistributorMarket[d,c]
 
+    for (d,cu) in distanceDistributorMarket:
+        for co in collector:
+            co_split = int(co.split("-")[3])
+            d_split = int(co.split("-")[3])
+            if d_split == co_split:
+                distanceMatrix[cu,co] = distanceDistributorMarket[d,cu]
     return distanceMatrix
 
-def get_distance_collector_recycling(recycling_stations):
+def get_distance_collector_recycling(recycling_stations, collectors_index):
 
     filePath = "Data/distanceMatrixCollectorsRecycling.p"
 
@@ -240,18 +250,22 @@ def get_distance_collector_recycling(recycling_stations):
 
         gmaps = googlemaps.Client(get_google_maps_key())
         distanceMatrix = {}
-        print(recycling_stations)
         for recycling in recycling_stations:
             r = recycling.split("-")[2] + ", Germany"
 
             for c in collector_locations.keys():
-                collector_coordinates = str(collector_locations[c]['lat']) + ", " + str(
-                    collector_locations[c]['lon'])
-                distance = gmaps.distance_matrix(origins=collector_coordinates, destinations=r,
-                                 mode='driving')
-                distanceMatrix[c,r] = distance["rows"][0]['elements'][0]['distance']['value']
+                for co in collectors_index:
+                    co_split = int(co.split("-")[3])
+                    if c == co_split:
+                        print(co)
+                        collector_coordinates = str(collector_locations[c]['lat']) + ", " + str(
+                            collector_locations[c]['lon'])
+                        distance = gmaps.distance_matrix(origins=collector_coordinates, destinations=r,
+                                         mode='driving')
+                        distanceMatrix[co,recycling] = distance["rows"][0]['elements'][0]['distance']['value']
 
         pickle.dump(distanceMatrix, open(filePath, "wb"))
+    print(distanceMatrix)
 
     return distanceMatrix
 
@@ -275,7 +289,7 @@ def get_distance_recycling_manufacturer(recycling_stations):
             for m in manufacturer.keys():
                 distance = gmaps.distance_matrix(origins=r, destinations=manufacturer[m],
                                  mode='driving')
-                distanceMatrix[r,m] = distance["rows"][0]['elements'][0]['distance']['value']
+                distanceMatrix[recycling,m] = distance["rows"][0]['elements'][0]['distance']['value']
 
         pickle.dump(distanceMatrix, open(filePath, "wb"))
 

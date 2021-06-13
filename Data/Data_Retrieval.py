@@ -120,7 +120,7 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
                 T[p,m,a,s] = distanceManufacturerDistributor[m,a] / 1000
 
     # distributor market
-    distanceDistributorMarket = get_distance_distributor_customer()
+    distanceDistributorMarket = get_distance_distributor_customer(A)
     for s in S:
         for p in P:
             for (a,b) in distanceDistributorMarket:
@@ -129,7 +129,7 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
 
 
     # market collector
-    distanceMarketCollector = get_distance_customer_collector(distanceDistributorMarket)
+    distanceMarketCollector = get_distance_customer_collector(distanceDistributorMarket, C)
     for s in S:
         for p in P:
             for (b,c) in distanceMarketCollector:
@@ -137,7 +137,7 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
 
 
     # collector recycling center
-    distanceCollectorRecycling = get_distance_collector_recycling(R)
+    distanceCollectorRecycling = get_distance_collector_recycling(R,C)
     for s in S:
         for p in P:
             for (c,r) in distanceCollectorRecycling:

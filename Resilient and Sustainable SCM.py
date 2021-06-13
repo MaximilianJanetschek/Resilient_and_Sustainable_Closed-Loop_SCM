@@ -103,9 +103,7 @@ obj_Environmental = gurobi.LinExpr()
 
 # pollution emitted by Value Adding
 obj_Environmental_Pol_Value_Adding = gurobi.LinExpr()
-obj_Environmental_Pol_Value_Adding += gurobi.quicksum(WU[m] * E[m] for m in M) + gurobi.quicksum(WU[r]*E[r]for r in R)
-+ gurobi.quicksum(EE[m]*E[m]for m in M) + gurobi.quicksum(EE[r]*E[r]for r in R) + gurobi.quicksum(PE[m]*E[m]for m in M)
-+ gurobi.quicksum(PE[r]*E[r]for r in R)
+obj_Environmental_Pol_Value_Adding += gurobi.quicksum(WU[m] * E[m] for m in M) + gurobi.quicksum(WU[r]*E[r]for r in R) + gurobi.quicksum(EE[m]*E[m]for m in M) + gurobi.quicksum(EE[r]*E[r]for r in R) + gurobi.quicksum(PE[m]*E[m]for m in M)+ gurobi.quicksum(PE[r]*E[r]for r in R)
 
 # pollution emitted by transport
 obj_Environmental_Pol_Transport = gurobi.LinExpr()
@@ -135,8 +133,8 @@ obj_Social_Fixed_Ops += gurobi.quicksum(FJO[i] * PS[i] for i in I) + gurobi.quic
 # variable job opportunities
 obj_Social_Variable_Ops = gurobi.LinExpr()
 obj_Social_Variable_Ops += gurobi.quicksum(
-    gurobi.quicksum(VJO[i,s] * (Q[w,i,m,s] / (K[w,i,s] * (1 - N[i,s]))) for i in I)
-    + gurobi.quicksum(VJO[j,s] * (Q[w,j,m,s] / (K[w,j,s])) for j in J)
+    gurobi.quicksum(VJO[i,s] * gurobi.quicksum(Q[w,i,m,s] / (K[w,i,s] * (1 - N[i,s]) for w in W for m in M)) for i in I)
+    + gurobi.quicksum(VJO[j,s] * gurobi.quicksum(Q[w,j,m,s] / (K[w,j,s] for w in W for m in M)) for j in J)
     + gurobi.quicksum(VJO[m,s] * (Q[p,m,a,s] / (K[p,m,s])) for m in M)
     + gurobi.quicksum(VJO[a, s] * (Q[p, a, b, s] / (K[p, a, s])) for a in A)
     + gurobi.quicksum(VJO[c, s] * (Q[p, c, r, s] / (K[p, c, s])) for c in C)
