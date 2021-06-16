@@ -1,5 +1,6 @@
 import gurobipy as gb
 
+
 class OptimizationModel:
     decision_x = [1,2]
     decision_S = [2]

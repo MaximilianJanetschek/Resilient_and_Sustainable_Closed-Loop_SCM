@@ -9,6 +9,8 @@ from geopy.geocoders import Nominatim
 import pickle
 import os
 import googlemaps
+import pandas as pd
+
 from pathlib import Path
 
 
@@ -46,12 +48,13 @@ def get_distributor_locations() -> list():
 
 
 def get_population_by_district() -> dict():
+
     plz_dict = get_plz_city_district()
 
     # retrieve all plz and area names
 
-    with open('Data/zuordnung_plz_ort_landkreis.csv', newline='') as csvfile:
-        zip_code_city = csv.DictReader(csvfile, delimiter=',')
+    with open('Data/zuordnung_plz_ort_landkreis.csv', encoding="utf8", newline='') as csvfile:
+        zip_code_city = csv.DictReader(csvfile, delimiter=';')
         for row in zip_code_city:
             plz_dict[row['plz']] = {'landkreis':row['landkreis'], 'population':0}
 
@@ -92,9 +95,10 @@ def get_plz_einwohner(plz_dict:dict()) -> dict():
                 print(row['plz'] + ' with a population of '+  row['einwohner'])
 
 def get_plz_city_district() -> dict():
+
     plz_dict = {}
-    with open('Data/zuordnung_plz_ort_landkreis.csv', newline='') as csvfile:
-        zip_code_city = csv.DictReader(csvfile, delimiter=',')
+    with open('Data/zuordnung_plz_ort_landkreis.csv', encoding="utf8", newline='') as csvfile:
+        zip_code_city = csv.DictReader(csvfile, delimiter=';')
         for row in zip_code_city:
             plz_dict[row['plz']] = {'landkreis':row['landkreis'], 'population':0}
 

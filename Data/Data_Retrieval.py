@@ -1,6 +1,7 @@
 from Data.DataManipulation import *
 from random import seed
 from random import random
+import os
 
 
 def initialize_sets():
@@ -29,7 +30,6 @@ def initialize_sets():
         B.append(i)
 
     # collectors
-    collector_locations = get_distributor_locations()
     counter = 1
     C = []
     for i in distributor_locations.keys():
@@ -53,9 +53,9 @@ def initialize_sets():
 
     return [I,J,M,A,B,C,R,P,W,S,F]
 
-def get_parameters(I,J,M,A,B,C,R,P,W,S,F):
-    filePath = "Data/parameters.p"
-
+def get_parameters(indices):
+    [I,J,M,A,B,C,R,P,W,S,F] = indices
+    filePath = os.getcwd() + "/Data/parameters.p"
     if os.path.exists(filePath):
         parameters = pickle.load(open(filePath, "rb"))
 
@@ -166,7 +166,7 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
     for m in M:
         FC[m] = 200000
     for a in A:
-        FC[a] = 50000
+        FC[a] = 500000
 
     for c in C:
         FC[c] = 30000
@@ -185,7 +185,7 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
                 K[w,j,s] = capacity_raw[w] * 1.2
         for p in P:
             for m in M:
-                K[p,m,s] = round(1302152,0)
+                K[p,m,s] = round(1302152,0)*1.5
             for a in A:
                 K[p, a, s] = 260430*3
             for c in C:
@@ -204,9 +204,9 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
             for b in B:
                 U[p, b, s] = final_tire_price*0.05
             for c in C:
-                U[p, c, s] = 0.1*final_tire_price
+                U[p, c, s] = -0.05*final_tire_price
         for r in R:
-            U[r, s] = 0.2*final_tire_price
+            U[r, s] = 0.002*final_tire_price
 
     # percentage scrapped
     alpha = {}
@@ -214,6 +214,7 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
         for b in B:
             for p in P:
                 alpha[p,b,s] = round(random(),2)
+    print(alpha)
 
     # demand of market b
     customer = get_population_by_district()
@@ -352,3 +353,5 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
 
 
     return [RC, CC, LC, prob,N,G,T,FC,K,U,D,alpha, H, WU,EE,PE,FJO,VJO,SC,IC,EX]
+
+
