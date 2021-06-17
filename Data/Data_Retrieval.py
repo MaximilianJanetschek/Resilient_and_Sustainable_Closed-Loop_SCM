@@ -3,6 +3,11 @@ from random import seed
 from random import random
 import os
 
+def get_coordinates_of_all_sites():
+
+
+    return locations
+
 
 def initialize_sets():
 

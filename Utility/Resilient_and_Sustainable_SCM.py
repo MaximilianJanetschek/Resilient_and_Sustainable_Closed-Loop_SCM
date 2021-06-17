@@ -41,8 +41,10 @@ def get_multi_objective_model(indices,parameters):
     Established_Variable += [(a) for a in A]
     Established_Variable += [(c) for c in C]
     Established_Variable += [(r) for r in R]
+
     E = SCM_Model.addVars(Established_Variable,vtype=gurobi.GRB.BINARY, name="Established")
 
+    Variable = {'E': E, 'E indices': Established_Variable}
     SCU = SCM_Model.addVars(F,vtype=gurobi.GRB.BINARY, name="Information_Sharing_Center")
     IS = SCM_Model.addVars(F,vtype=gurobi.GRB.BINARY, name="Information_Security_Center")
 
@@ -253,8 +255,8 @@ def get_multi_objective_model(indices,parameters):
 
     SCM_Model.addConstr(gurobi.quicksum(SCU[f] for f in F) == 1 )
 
-    SCM_Model.Params.NumericFocus = 2
-
+    # SCM_Model.Params.NumericFocus = 2
+    #
 
 
     '''Optimization'''
@@ -282,6 +284,6 @@ def get_multi_objective_model(indices,parameters):
     SCM_Model.optimize()
     '''
 
-    return SCM_Model, objectives
+    return SCM_Model, objectives, Variable
 
 

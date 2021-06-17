@@ -113,7 +113,7 @@ def get_grid_points(ranges, number_of_grid_points) -> list():
     return grid_points
 
 
-def solveProblemP (P, objectives, ranges, grid_point_obj_1, grid_point_obj_2, number_of_obj_functions) -> list():
+def solveProblemP (P, objectives, ranges, grid_point_obj_1, grid_point_obj_2, number_of_obj_functions, Variable) -> list():
     obj = gb.LinExpr(objectives[0])
     obj_help = gb.LinExpr()
     S = P.addVars([2,3],vtype=gb.GRB.CONTINUOUS, name="S")
@@ -137,9 +137,18 @@ def solveProblemP (P, objectives, ranges, grid_point_obj_1, grid_point_obj_2, nu
     solved_model = (P.status == gb.GRB.Status.OPTIMAL)
     S_values = []
     solutions = []
+    established_locations = []
     if solved_model:
         S_values = [0,0,S[2].x, S[3].x]
         solutions = [objectives[i].getValue() for i in range(len(objectives))]
+        # get opened locations
+
+        for e in Variable['E indices']:
+            if Variable['E'][e].x >= 0.8:
+                established_locations.append(e)
+
+
+
 
 
 
@@ -148,7 +157,7 @@ def solveProblemP (P, objectives, ranges, grid_point_obj_1, grid_point_obj_2, nu
     P.update()
 
 
-    return solutions, S_values, solved_model
+    return solutions, S_values, solved_model, established_locations
 
 
 
