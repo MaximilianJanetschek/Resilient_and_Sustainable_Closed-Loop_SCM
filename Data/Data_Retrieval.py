@@ -126,6 +126,8 @@ def get_parameters(indices):
 
 
 def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
+    Scenario = {'Worse', 'Trend', 'Good'}
+
     seed(115599)
     RC = {}
     raw_prices = {"Natrual Rubber": 1.96, "Syntetic Polymere":1.5, "Fillers":3.26}
@@ -138,9 +140,9 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
     # raw data prices
     for w in W:
         for i in I:
-            RC[w,i] = raw_prices[w]   # https://www.statista.com/statistics/727582/price-of-rubber-per-pound/
+            RC[w,i] = raw_prices[w]  * (random.randrange(80, 120, 2)/100) # https://www.statista.com/statistics/727582/price-of-rubber-per-pound/
         for j in J:
-            RC[w, j] = raw_prices[w] * 1.5
+            RC[w, j] = raw_prices[w] * 1.5 *  (random.randrange(80, 120, 2)/100)
 
     # Fixed cost of contracting supplier
     CC = {}
