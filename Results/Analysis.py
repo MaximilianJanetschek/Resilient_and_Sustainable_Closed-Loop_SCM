@@ -62,19 +62,30 @@ fig.show()
 
 #density_scatter( x, y, bins = [30,30] )
 
-# get German map and plot all locations
-indices = get_coordinates_of_all_sites()
+def print_established_locations(locations: list()):
 
+    # get German map and plot all locations
+    indices = initialize_sets()
+    coordinates_of_all_sites = get_coordinates_of_all_sites(indices)
+    MapOfNetwork = folium.Map(location=(52.520008, 13.404954), zoom_start=5.3)
+    color_dict = {'suppliers': 'beige','manufacturer': 'orange','distributor': 'green', 'collectors': 'lightblue', 'recyclers': 'blue'}
+    # {'suppliers': '#DAD7CB', 'manufacturer': '#E37222', 'distributor': '#A2AD00', 'collectors': '#98C6EA','recyclers': '#64A0C8'}
 
-# supplier #DAD7CB
+    for location in locations:
+        node = coordinates_of_all_sites[location]
+        folium.Marker(location=[node["lat"], node["lon"]], icon=folium.Icon(color=color_dict[node['category']])).add_to(MapOfNetwork)
 
-# manufacturer #E37222
+    MapOfNetwork.save('Results/Plots/DistributorNetworkTest.html')
 
-# distributors #A2AD00
+    # supplier #DAD7CB
 
-# collectors #98C6EA
+    # manufacturer #E37222
 
-# recyclers #64A0C8
+    # distributors #A2AD00
+
+    # collectors #98C6EA
+
+    # recyclers #64A0C8
 
 def create_folium_with_distributors(nodes_to_be_plotted:dict(), path: str):
     MapOfNetwork = folium.Map(location=(52.520008, 13.404954), zoom_start=5.3)
@@ -96,6 +107,8 @@ def create_folium_with_distributors(nodes_to_be_plotted:dict(), path: str):
         os.makedirs(check_path)
         MapOfNetwork.save('Results/Plots/DistributorNetworkTest.html')
 
+locations = pickle.load(open('established_locations_list.p', 'rb'))[0]
+print_established_locations(locations)
 
 
 

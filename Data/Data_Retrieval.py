@@ -1,10 +1,64 @@
 from Data.DataManipulation import *
 from random import seed
 from random import random
+import Data.DataManipulation
 import os
 
-def get_coordinates_of_all_sites():
+def get_coordinates_of_all_sites(indices):
+    [I, J, M, A, B, C, R, P, W, S, F] = indices
+    filePath = 'Data/locations_of_all_sites.p'
+    if os.path.exists(filePath):
+        locations = pickle.load(open(filePath, "rb"))
 
+    else:
+        geolocator = Nominatim(user_agent="example app")
+
+
+        locations = {}
+        # suppliers
+        primary_supplier = {'PS_1': "Leipzig, Germany", 'PS_2': "Kassel, Germany", 'PS_3': "Düsseldorf, Germany"}
+        backup_supplier = {'BS_1': "Leipzig, Germany", 'BS_2': "Münster, Germany", 'BS_3': "Nürnberg, Germany"}
+        manufacturer = {"M 1, Hannover, Germany": "Hannover, Germany", "M 2, Korbach, Germany": "Korbach, Germany",
+                        "M 3, Otrokovice, Tschechien": "Otrokovice, Tschechien",
+                        "M 4, Puchov, Slowakai": "Puchov, Slowakai"}
+
+
+        for i in I:
+            output = geolocator.geocode(primary_supplier[i]).raw
+            locations[i] ={"lat": output['lat'], "lon": output['lon'], 'name': output['display_name'], 'category':'suppliers'}
+
+        for j in J:
+            output = geolocator.geocode(backup_supplier[j]).raw
+            locations[j] ={"lat": output['lat'], "lon": output['lon'], 'name': output['display_name'], 'category':'suppliers'}
+
+        print(locations)
+
+        # manufacturers
+        for m in M:
+            output = geolocator.geocode(manufacturer[m]).raw
+            locations[m] ={"lat": output['lat'], "lon": output['lon'], 'name': output['display_name'], 'category':'manufacturer'}
+
+        # distributors
+        distributors = get_distributor_locations()
+        print(distributors)
+        for a in A:
+            dis = int(a.split('-')[3])
+            locations[a] = {"lat": distributors[dis]['lat'], "lon": distributors[dis]['lon'], 'category':'distributor'}
+
+
+        # collectors
+        for c in C:
+            dis = int(c.split('-')[3])
+            locations[c] = {"lat": distributors[dis]['lat'], "lon": distributors[dis]['lon'], 'category':'collectors'}
+
+
+        # recyclers
+        for r in R:
+            recycler = r.split('-')[2] +  ', Germany'
+            output = geolocator.geocode(recycler).raw
+            locations[r] ={"lat": output['lat'], "lon": output['lon'], 'name': output['display_name'], 'category':'recyclers'}
+
+        pickle.dump(locations, open(filePath, "wb"))
 
     return locations
 
