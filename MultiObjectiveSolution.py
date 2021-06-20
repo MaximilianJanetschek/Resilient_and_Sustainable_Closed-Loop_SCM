@@ -59,18 +59,20 @@ print('enter multi objective solution procedure')
 seconds = time.time()
 time_and_solution_count = []
 established_locations_list = []
+supply_links_list = []
 
 
 while i_counter[2] < number_of_grid_points[2]:
     while i_counter[1] < number_of_grid_points[1]:
         # Solve problem P
-        solution, S, feasible_status, established_locations = OP.solveProblemP(ModelSCM, objectives, ranges, grid_points[1][i_counter[1]], grid_points[2 ][i_counter[2]], len(objectives), Variable)
+        solution, S, feasible_status, established_locations, supply_links = OP.solveProblemP(ModelSCM, objectives, ranges, grid_points[1][i_counter[1]], grid_points[2 ][i_counter[2]], len(objectives), Variable)
 
         # If feasible
         if feasible_status:
             # Safe Solution
             nonDominatedSolutions.append(solution)
             established_locations_list.append(established_locations)
+            supply_links_list.append(supply_links)
 
             # Then
             counter_pareto_solutions += 1  # n_p = p_p + 1
@@ -101,6 +103,7 @@ print(nonDominatedSolutions)
 pickle.dump(nonDominatedSolutions, open("non_dominated_solutions.p", "wb"))
 pickle.dump(time_and_solution_count, open("time_and_solution_count.p ", "wb"))
 pickle.dump(established_locations_list, open("established_locations_list.p", "wb"))
+pickle.dump(supply_links_list, open("supply_links_list.p", "wb"))
 
 test_matrix = np.matrix([[1,1/3,1/9],[3,1,1],[9,1,1]])
 

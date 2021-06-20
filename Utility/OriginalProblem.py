@@ -138,6 +138,7 @@ def solveProblemP (P, objectives, ranges, grid_point_obj_1, grid_point_obj_2, nu
     S_values = []
     solutions = []
     established_locations = []
+    supply_links = []
     if solved_model:
         S_values = [0,0,S[2].x, S[3].x]
         solutions = [objectives[i].getValue() for i in range(len(objectives))]
@@ -146,6 +147,11 @@ def solveProblemP (P, objectives, ranges, grid_point_obj_1, grid_point_obj_2, nu
         for e in Variable['E indices']:
             if Variable['E'][e].x >= 0.8:
                 established_locations.append(e)
+
+        for q in Variable['Q indices']:
+            if Variable['Q'][q].x >= 0.5:
+                supply_links.append(q)
+
 
 
 
@@ -157,7 +163,7 @@ def solveProblemP (P, objectives, ranges, grid_point_obj_1, grid_point_obj_2, nu
     P.update()
 
 
-    return solutions, S_values, solved_model, established_locations
+    return solutions, S_values, solved_model, established_locations, supply_links
 
 
 

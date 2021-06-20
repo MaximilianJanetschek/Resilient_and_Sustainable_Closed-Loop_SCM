@@ -18,6 +18,7 @@ def get_multi_objective_model(indices,parameters):
     Production_Variable += [(w,j,m,s) for w in W for j in J for m in M for s in S]
     Production_Variable += [(p,m,a,s) for p in P for m in M for a in A for s in S]
     Production_Variable += [(p,a,b,s) for p in P for a in A for b in B for s in S]
+    Market_Data = [(p, a, b, s) for p in P for a in A for b in B for s in S]
     Production_Variable += [(p,b,c,s) for p in P for b in B for c in C for s in S]
     Production_Variable += [(p,c,r,s) for p in P for c in C for r in R for s in S]
     Production_Variable += [(r,m,s,"dummy") for r in R for m in M for s in S]
@@ -44,7 +45,7 @@ def get_multi_objective_model(indices,parameters):
 
     E = SCM_Model.addVars(Established_Variable,vtype=gurobi.GRB.BINARY, name="Established")
 
-    Variable = {'E': E, 'E indices': Established_Variable}
+    Variable = {'E': E, 'E indices': Established_Variable, 'Q':Q, 'Q indices':Market_Data}
     SCU = SCM_Model.addVars(F,vtype=gurobi.GRB.BINARY, name="Information_Sharing_Center")
     IS = SCM_Model.addVars(F,vtype=gurobi.GRB.BINARY, name="Information_Security_Center")
 

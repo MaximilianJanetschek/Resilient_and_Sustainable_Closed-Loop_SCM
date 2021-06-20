@@ -1,6 +1,5 @@
 from Data.DataManipulation import *
-from random import seed
-from random import random
+import random
 import Data.DataManipulation
 import os
 
@@ -45,6 +44,12 @@ def get_coordinates_of_all_sites(indices):
             dis = int(a.split('-')[3])
             locations[a] = {"lat": distributors[dis]['lat'], "lon": distributors[dis]['lon'], 'category':'distributor'}
 
+        customer_dict = get_population_by_district()
+        for b in B:
+            print(b)
+            if b != '':
+                output = geolocator.geocode(b).raw
+                locations[b] ={"lat": output['lat'], "lon": output['lon'], 'name': output['display_name'], 'category':'customer'}
 
         # collectors
         for c in C:
@@ -126,11 +131,15 @@ def get_parameters(indices):
 
 
 def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
-    Scenario = {'Worse', 'Trend', 'Good'}
-
-    seed(115599)
+    Scenario = {'Worse': {'demand':{'Lower_Limit':60, 'Upper_Limit': 90},'cost':{'Lower_Limit':110, 'Upper_Limit': 140}}, 'Trend':{'demand':{'Lower_Limit':100, 'Upper_Limit': 101},'cost':{'Lower_Limit':100, 'Upper_Limit': 101}}, 'Good':{'demand':{'Lower_Limit':110, 'Upper_Limit': 150},'cost':{'Lower_Limit':70, 'Upper_Limit': 90}}}
+    # worse scenario: economy recovers badly, demand goes down and cost up
+    # trend as it is
+    # good economy recovers, cost go down
+    random.seed(115599)
     RC = {}
     raw_prices = {"Natrual Rubber": 1.96, "Syntetic Polymere":1.5, "Fillers":3.26}
+
+    Man_cost = {"M 1, Hannover, Germany":1.2, "M 2, Korbach, Germany":1.1, "M 3, Otrokovice, Tschechien":1, "M 4, Puchov, Slowakai":0.9}
 
     # natural rubber https://www.statista.com/statistics/727582/price-of-rubber-per-pound/
     # synthetic polymers https://www.ft.com/content/f97d653c-71f4-4b84-90ee-896b7bd5d299
@@ -140,33 +149,37 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
     # raw data prices
     for w in W:
         for i in I:
-            RC[w,i] = raw_prices[w]  * (random.randrange(80, 120, 2)/100) # https://www.statista.com/statistics/727582/price-of-rubber-per-pound/
+            intermediate_result =  raw_prices[w]  * (random.randrange(80, 120, 2)/100) # https://www.statista.com/statistics/727582/price-of-rubber-per-pound/
+            RC[w,i] = round(intermediate_result,2)
         for j in J:
-            RC[w, j] = raw_prices[w] * 1.5 *  (random.randrange(80, 120, 2)/100)
-
-    # Fixed cost of contracting supplier
+            intermediate_result = raw_prices[w] * 1.5 *  (random.randrange(80, 120, 2)/100)
+            RC[w, j] = round(intermediate_result,2)
+            # Fixed cost of contracting supplier
     CC = {}
     for i in I:
-        CC[i] = 17596           # https://blog.iaccm.com/commitment-matters-tim-cummins-blog/the-cost-of-a-contract
+        intermediate_result = 17596  *  (random.randrange(80, 120, 2)/100)      # https://blog.iaccm.com/commitment-matters-tim-cummins-blog/the-cost-of-a-contract
+        CC[i] = round(intermediate_result,2)
     for j in J:
-        CC[j] = 17596 * 1.5
+        intermediate_result =  17596 * 1.5*  (random.randrange(80, 120, 2)/100)
+        CC[j] = round(intermediate_result,2)
 
     # Production Cost of tire type p
     LC = {}
     for p in P:
         for m in M:
-            LC[p,m] = final_tire_price * 0.5
+            intermediate_result = final_tire_price * 0.5 * Man_cost[m]
+            LC[p, m] =round(intermediate_result,2)
 
     prob = {}  # disruption probability in scenario s
     for s in S:
-        prob[s] = round(random()*0.1,2)
+        prob[s] = round(random.random()*0.1,2)
 
 
     # disrupted capacitz of PS
     N = {}
     for s in S:
         for i in I:
-            N[(i,s)] = round(random()*0.5,2)
+            N[(i,s)] = round(random.random()*0.5,2)
 
     # quantity of raw material
     raw_material_kg_per_kg = {"Natrual Rubber": 0.09, "Syntetic Polymere": 0.26, "Fillers": 0.33} # https://escholarship.org/uc/item/06r0q71c
@@ -181,22 +194,22 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
     for s in S:
         for w in W:
             for (i,m) in distanceSupplierManufacturer.keys():
-                T[w,i,m,s] = 0.001 * distanceSupplierManufacturer[i,m] / 1000
-
+                intermediate_result = (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)*0.001 * distanceSupplierManufacturer[i,m] / 1000
+                T[w, i, m, s] = round(intermediate_result,15)
     # manufacturer distributor
     distanceManufacturerDistributor=  get_distance_manufacturer_distributors(A)
     for s in S:
         for p in P:
             for (m,a) in distanceManufacturerDistributor:
-                T[p,m,a,s] = 0.01 * distanceManufacturerDistributor[m,a] / 1000
-
+                intermediate_result= (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)*0.01 * distanceManufacturerDistributor[m,a] / 1000
+                T[p, m, a, s] = round(intermediate_result,15)
     # distributor market
     distanceDistributorMarket = get_distance_distributor_customer(A)
     for s in S:
         for p in P:
             for (a,b) in distanceDistributorMarket:
-                T[p,a,b,s] = 0.03*distanceDistributorMarket[a,b] / 1000
-
+                intermediate_result =  (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)*0.03*distanceDistributorMarket[a,b] / 1000
+                T[p, a, b, s] = round(intermediate_result,15)
 
 
     # market collector
@@ -204,35 +217,36 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
     for s in S:
         for p in P:
             for (b,c) in distanceMarketCollector:
-                T[p,b,c,s] = 0.03*distanceMarketCollector[b,c] / 1000
-
+                intermediate_result = (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)*0.03*distanceMarketCollector[b,c] / 1000
+                T[p,b,c,s] = round(intermediate_result,15)
 
     # collector recycling center
     distanceCollectorRecycling = get_distance_collector_recycling(R,C)
     for s in S:
         for p in P:
             for (c,r) in distanceCollectorRecycling:
-                T[p,c,r,s] = 0.02 * distanceCollectorRecycling[c,r] / 1000
-
+                intermediate_result= (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)*0.02 * distanceCollectorRecycling[c,r] / 1000
+                T[p,c,r,s] = round(intermediate_result,15)
 
     # recycling manufacturer
     distanceRecyclingManufacturer = get_distance_recycling_manufacturer(R)
     print(distanceRecyclingManufacturer)
     for s in S:
         for (r,m) in distanceRecyclingManufacturer:
-            T[r,m,s] = 0.005*distanceRecyclingManufacturer[r,m]
+            intermediate_result=(random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)*0.005*distanceRecyclingManufacturer[r,m]
+            T[r, m, s] = round(intermediate_result,15)
 
     # Fixed Cost
     FC = {}
     for m in M:
-        FC[m] = 200000
+        FC[m] = 200000*Man_cost[m]
     for a in A:
-        FC[a] = 500000
+        FC[a] = 500000 * (random.randrange(80, 120, 2)/100)
 
     for c in C:
-        FC[c] = 30000
+        FC[c] = 30000*(random.randrange(80, 120, 2)/100)
     for r in R:
-        FC[r] = 100000
+        FC[r] = 100000*(random.randrange(80, 120, 2)/100)
 
     # capacity
     K = {}
@@ -241,40 +255,50 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
         # PS
         for w in W:
             for i in I:
-                K[w,i,s] = capacity_raw[w] * 1.7
+                intermediate_result = capacity_raw[w] * 1.7 * (random.randrange(80, 120, 2)/100)*(random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                K[w, i, s] = round(intermediate_result,0)
             for j in J:
-                K[w,j,s] = capacity_raw[w] * 1.2
+                intermediate_result = capacity_raw[w] * 1.2* (random.randrange(80, 120, 2)/100)*(random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                K[w, j, s] = round(intermediate_result,0)
         for p in P:
             for m in M:
-                K[p,m,s] = round(1302152,0)*1.5
+                intermediate_result = round(1302152,0)*1.5 *Man_cost[m]*(random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                K[p, m, s] = round(intermediate_result,0)
             for a in A:
-                K[p, a, s] = 260430*3
+                intermediate_result = 260430*3 * (random.randrange(80, 120, 2)/100)*(random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                K[p, a, s] = round(intermediate_result, 0)
             for c in C:
-                K[p, c, s] = round(260430*2,0)
+                intermediate_result = round(260430*2,0)*(random.randrange(80, 120, 2)/100)* (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                K[p, c, s] = round(intermediate_result, 0)
         for r in R:
-            K[r, s] = 578734*2
+            K[r, s] = 578734*2*(random.randrange(80, 120, 2)/100)
 
     # purchase prices
     U = {}
     for s in S:
         for p in P:
             for m in M:
-                U[p,m,s] = final_tire_price*0.8
+                intermediate_result = final_tire_price*0.8*(random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                U[p, m, s] = round(intermediate_result, 8)
             for a in A:
-                U[p, a, s] = final_tire_price
+                intermediate_result = final_tire_price*(random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                U[p, a, s]= round(intermediate_result, 8)
             for b in B:
-                U[p, b, s] = final_tire_price*0.05
+                intermediate_result = final_tire_price*0.05*(random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                U[p, b, s]= round(intermediate_result, 8)
             for c in C:
-                U[p, c, s] = -0.05*final_tire_price
+                intermediate_result = -0.05*final_tire_price*(random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                U[p, c, s] = round(intermediate_result, 8)
         for r in R:
-            U[r, s] = 0.002*final_tire_price
+            intermediate_result= 0.002*final_tire_price*(random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+            U[r, s]= round(intermediate_result, 8)
 
     # percentage scrapped
     alpha = {}
     for s in S:
         for b in B:
             for p in P:
-                alpha[p,b,s] = round(random(),2)
+                alpha[p,b,s] = round(random.randrange(60,100)/100,2)
     print(alpha)
 
     # demand of market b
@@ -286,7 +310,7 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
     for s in S:
         for p in P:
             for b in customer.keys():
-                demand = total_demand * (customer[b] / total_population)
+                demand = total_demand * (customer[b] / total_population)* (random.randrange(Scenario[s]['demand']['Lower_Limit'], Scenario[s]['demand']['Upper_Limit'], 1)/100)
                 D[p,b,s] = round(demand,0)
 
     # polution emitted
@@ -296,81 +320,87 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
         for m in M:
             # from primary supplier
             for i in I:
-               H[i,m,s] = T["Natrual Rubber",i,m,s]
+                intermediate_result = T["Natrual Rubber",i,m,s] * (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100) / Man_cost[m]
+                H[i, m, s] = round(intermediate_result, 15)
             # from backup supplier
             for j in J:
-                H[j,m,s] = T["Natrual Rubber",j,m,s]
+                intermediate_result = T["Natrual Rubber",j,m,s] *  (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100) / Man_cost[m]
+                H[j, m, s] = round(intermediate_result, 15)
             # manufacturer to distributor
             for a in A:
-                H[m,a,s] = T['Light-Vehicle',m,a,s]
+                intermediate_result = T['Light-Vehicle',m,a,s] * (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100) / Man_cost[m]
+                H[m, a, s] = round(intermediate_result, 15)
 
         # distributor to market
         for a in A:
             for b in B:
-                H[a,b,s] = T['Light-Vehicle',a,b,s]
-
+                intermediate_result = T['Light-Vehicle',a,b,s] *(random.randrange(80, 120, 2)/100)* (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                H[a, b, s] = round(intermediate_result,15)
         # market to collector
         for b in B:
             for c in C:
-                H[b,c,s] = T['Light-Vehicle',b,c,s]
-
+                intermediate_result = T['Light-Vehicle',b,c,s] * (random.randrange(80, 120, 2)/100)*(random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                H[b, c, s] = round(intermediate_result,15)
         # collector to recycler
         for c in C:
             for r in R:
-                H[c,r,s] = T['Light-Vehicle',c,r,s]
-
+                intermediate_result = T['Light-Vehicle',c,r,s] *(random.randrange(80, 120, 2)/100)* (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                H[c, r, s] = round(intermediate_result,15)
         # recycler to manufacturer
         for r in R:
             for m in M:
-                H[r,m,s] = T[r,m,s]
+                intermediate_result = T[r,m,s] *(random.randrange(80, 120, 2)/100)* (random.randrange(Scenario[s]['cost']['Lower_Limit'], Scenario[s]['cost']['Upper_Limit'], 1)/100)
+                H[r, m, s] = round(intermediate_result,15)
 
     # water consumption
     WU = {}
     for m in M:
-        WU[m] = round(random()*10000000,2)
+        WU[m] = round(random.random()*10000000 / (Man_cost[m]*2),2)
     for r in R:
-        WU[r] = round(random()*2000000,2)
+        WU[r] = round(random.random()*2000000,2)
 
     # electric energy
     EE = {}
     # manufacturer
     for m in M:
-        EE[m] = 68.12 * K['Light-Vehicle',m,"Trend"]
+        intermediate_result = 68.12 * K['Light-Vehicle',m,"Trend"]/ (Man_cost[m]*2)
+        EE[m] = round(intermediate_result,6)
     # recycler
     for r in R:
-        EE[r] = 100 * K[r, "Trend"]
+        intermediate_result = 100 * K[r, "Trend"] *(random.randrange(80, 120, 2)/100)
+        EE[r] = round(intermediate_result, 6)
 
     # pollution emitted
     PE = {}
     for m in M:
-        PE[m] = round(random()*2000000,2)
+        PE[m] = round(random.random()*2000000/ (Man_cost[m]*2),2)
     for r in R:
-        PE[r] = round(random()*200000,2)
+        PE[r] = round(random.random()*200000*(random.randrange(80, 120, 2)/100),2)
 
     # fixed jobs opportunities
     FJO = {}
 
     # primary supplier
     for i in I:
-        FJO[i] = round(random()*1000,2)
+        FJO[i] = round(random.random()*1000,2)
     # backup supplier
     for j in J:
-        FJO[j] = round(random()*500,2)
+        FJO[j] = round(random.random()*500,2)
     # manufacturer
     for m in M:
-        FJO[m] = round(random()*10000,2)
+        FJO[m] = round(random.random()*10000,2)
 
     # distributor
     for a in A:
-        FJO[a] = round(random()*100,2)
+        FJO[a] = round(random.random()*100,2)
 
     # collector
     for c in C:
-        FJO[c] = round(random()*100,2)
+        FJO[c] = round(random.random()*100,2)
 
     # recycler
     for r in R:
-        FJO[r] = round(random()*750,2)
+        FJO[r] = round(random.random()*750,2)
 
 
     # variable job opportunities
@@ -378,27 +408,27 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
     for s in S:
         # primary supplier
         for i in I:
-            VJO[i,s] = round(random()*100,2)
+            VJO[i,s] = round(random.random()*100 * (random.randrange(Scenario[s]['demand']['Lower_Limit'], Scenario[s]['demand']['Upper_Limit'], 1)/100),2)
 
         # backup supplier
         for j in J:
-            VJO[j, s] = round(random()*50,2)
+            VJO[j, s] = round(random.random()*50* (random.randrange(Scenario[s]['demand']['Lower_Limit'], Scenario[s]['demand']['Upper_Limit'], 1)/100),2)
 
         # manufacturer
         for m in M:
-            VJO[m, s] = round(random()*300,2)
+            VJO[m, s] = round(random.random()*300* (random.randrange(Scenario[s]['demand']['Lower_Limit'], Scenario[s]['demand']['Upper_Limit'], 1)/100)/ (Man_cost[m]*2),2)
 
         # distributor
         for a in A:
-            VJO[a, s] = round(random()*200,2)
+            VJO[a, s] = round(random.random()*200* (random.randrange(Scenario[s]['demand']['Lower_Limit'], Scenario[s]['demand']['Upper_Limit'], 1)/100),2)
 
         # collector
         for c in C:
-            VJO[c, s] = round(random()*200,2)
+            VJO[c, s] = round(random.random()*200* (random.randrange(Scenario[s]['demand']['Lower_Limit'], Scenario[s]['demand']['Upper_Limit'], 1)/100),2)
 
         # recycler
         for r in R:
-            VJO[r, s] = round(random()*150,2)
+            VJO[r, s] = round(random.random()*150* (random.randrange(Scenario[s]['demand']['Lower_Limit'], Scenario[s]['demand']['Upper_Limit'], 1)/100),2)
 
     # establishment cost of information type f and information sharing center
     SC = {}
@@ -406,9 +436,9 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
     EX = {}
     for s in S:
         for f in F:
-            SC[f,s] = round(random()*50,2)
-            IC[f,s] = round(random()*30,2)
-            EX[f,s] = round(random()*70,2)
+            SC[f,s] = round(random.random()*50* (random.randrange(Scenario[s]['demand']['Lower_Limit'], Scenario[s]['demand']['Upper_Limit'], 1)/100),2)
+            IC[f,s] = round(random.random()*30* (random.randrange(Scenario[s]['demand']['Lower_Limit'], Scenario[s]['demand']['Upper_Limit'], 1)/100),2)
+            EX[f,s] = round(random.random()*70* (random.randrange(Scenario[s]['demand']['Lower_Limit'], Scenario[s]['demand']['Upper_Limit'], 1)/100),2)
 
 
 
