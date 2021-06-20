@@ -101,7 +101,7 @@ print('Found ' + str(counter_pareto_solutions) + " non-dominated solutions in " 
 print(nonDominatedSolutions)
 
 pickle.dump(nonDominatedSolutions, open("non_dominated_solutions.p", "wb"))
-pickle.dump(time_and_solution_count, open("time_and_solution_count.p ", "wb"))
+pickle.dump(time_and_solution_count, open("time_and_solution_count.p", "wb"))
 pickle.dump(established_locations_list, open("established_locations_list.p", "wb"))
 pickle.dump(supply_links_list, open("supply_links_list.p", "wb"))
 

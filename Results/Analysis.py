@@ -120,9 +120,23 @@ def create_folium_with_distributors(nodes_to_be_plotted:dict(), path: str):
         os.makedirs(check_path)
         MapOfNetwork.save('Results/Plots/DistributorNetworkTest.html')
 
-locations = pickle.load(open('established_locations_list.p', 'rb'))[0]
-links = pickle.load(open('supply_links_list.p', 'rb'))[0]
+locations = pickle.load(open('established_locations_list.p', 'rb'))[100]
+links = pickle.load(open('supply_links_list.p', 'rb'))[100]
 print_established_locations(locations, links)
 
 
+import pandas as pd
+
+plz_einwohner_df = pd.read_csv('Data/plz_einwohner.csv',
+    sep=',',
+    dtype={'plz': str, 'einwohner': int}
+)
+
+
+germany_df = pd.merge(
+    left=germany_df,
+    right=plz_einwohner_df,
+    on='plz',
+    how='left'
+)
 
