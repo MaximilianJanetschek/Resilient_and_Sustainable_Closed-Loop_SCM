@@ -172,7 +172,7 @@ def initialize_parameters(I,J,M,A,B,C,R,P,W,S,F):
 
     prob = {}  # disruption probability in scenario s
     for s in S:
-        prob[s] = round(random.random()*0.1,2)
+        prob[s] = round(random.random()*0.3,2)
 
 
     # disrupted capacitz of PS

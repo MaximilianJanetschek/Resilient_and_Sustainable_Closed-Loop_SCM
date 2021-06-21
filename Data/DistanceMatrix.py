@@ -10,7 +10,6 @@ gmaps = googlemaps.Client(key)
 
 # assume Munich for distributor
 distanceMatrix = {}
-distanceMatrix['Augsburg'] = {}
 counter = 1
 percentage_counter = 1
 for district in customer_dict.keys():

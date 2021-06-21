@@ -56,10 +56,15 @@ def get_population_by_district() -> dict():
     with open('Data/zuordnung_plz_ort_landkreis.csv', encoding="utf8", newline='') as csvfile:
         zip_code_city = csv.DictReader(csvfile, delimiter=';')
         for row in zip_code_city:
-            plz_dict[row['plz']] = {'landkreis':row['landkreis'], 'population':0}
+            landkreis = row['landkreis']
+            if row['landkreis'] == '':
+                landkreis = row['ort']
+            plz_dict[row['plz']] = {'landkreis':landkreis, 'population':0}
+
+
 
     # get citizens per zip code
-    get_plz_einwohner(plz_dict)
+    plz_dict = get_plz_einwohner(plz_dict)
 
     # sort population to area
     district_population = {}
@@ -70,6 +75,7 @@ def get_population_by_district() -> dict():
             district_population[zipcode['landkreis']] = zipcode['population']
 
     total_districts = sum_population(district_population)
+    print('total districts')
     print(total_districts)
 
     return district_population
@@ -85,14 +91,18 @@ def sum_population(district_population):
 
 def get_plz_einwohner(plz_dict:dict()) -> dict():
     # get citizens per zip code
+    sum_inhabitants = 0
     with open ('Data/plz_einwohner.csv', newline='') as csvfile:
         plz_einwohner = csv.DictReader(csvfile, delimiter= ',')
         for row in plz_einwohner:
+            sum_inhabitants += int(row['einwohner'])
             if row['plz'] in plz_dict.keys():
                 plz_dict[row['plz']]['population'] = plz_dict[row['plz']]['population'] + int(row['einwohner'])
             else:
                 print('Left out:')
                 print(row['plz'] + ' with a population of '+  row['einwohner'])
+
+    return plz_dict
 
 def get_plz_city_district() -> dict():
 
@@ -100,7 +110,10 @@ def get_plz_city_district() -> dict():
     with open('Data/zuordnung_plz_ort_landkreis.csv', encoding="utf8", newline='') as csvfile:
         zip_code_city = csv.DictReader(csvfile, delimiter=';')
         for row in zip_code_city:
-            plz_dict[row['plz']] = {'landkreis':row['landkreis'], 'population':0}
+            landkreis = row['landkreis']
+            if row['landkreis'] == '':
+                landkreis = row['ort']
+            plz_dict[row['plz']] = {'landkreis': landkreis, 'population': 0}
 
     return plz_dict
 
@@ -130,7 +143,6 @@ def get_distance_distributor_customer(distributors) -> dict():
 
     if os.path.exists(filePath):
         distanceMatrix = pickle.load(open(filePath, "rb"))
-
 
     else:
         print("retrieve all distributor market data by google maps")
