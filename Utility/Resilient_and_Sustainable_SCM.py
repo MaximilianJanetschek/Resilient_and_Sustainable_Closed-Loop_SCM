@@ -45,7 +45,7 @@ def get_multi_objective_model(indices,parameters):
 
     E = SCM_Model.addVars(Established_Variable,vtype=gurobi.GRB.BINARY, name="Established")
 
-    Variable = {'E': E, 'E indices': Established_Variable, 'Q':Q, 'Q indices':Market_Data}
+    Variable = {'E': E, 'E indices': Established_Variable, 'Q':Q, 'Q indices':Market_Data, 'PS':PS,'PS_indices':I ,'BS':BS,'BS_indices':J}
     SCU = SCM_Model.addVars(F,vtype=gurobi.GRB.BINARY, name="Information_Sharing_Center")
     IS = SCM_Model.addVars(F,vtype=gurobi.GRB.BINARY, name="Information_Security_Center")
 

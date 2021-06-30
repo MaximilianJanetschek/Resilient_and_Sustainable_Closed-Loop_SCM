@@ -14,37 +14,44 @@ import pandas as pd
 from pathlib import Path
 
 
-def get_distributor_locations() -> list():
-    geolocator = Nominatim(user_agent="example app")
-    plz_dict = get_plz_city_district()
-    locations = []
-    stepsize = 5000
-    buckets = range(stepsize,100001,stepsize)
-    locations = dict.fromkeys(buckets)
-    for i in locations.keys():
-        locations[i] = {}
+def get_distributor_locations_google() -> list():
+    filePath = 'Data/locations_google_distributors.p'
+    if os.path.exists(filePath):
+        locations = pickle.load(open(filePath, "rb"))
 
-    counter = 0
-    total = len(plz_dict.keys())
-    step = round(total / 100,0)
-    done_percentage = 0
-    for i in plz_dict.keys():
-        for j in locations.keys():
-            if int(i) < j:
-                search = i + ", Deutschland"
-                output = geolocator.geocode(search).raw
-                locations[j][int(i)] = {"lat":output['lat'], "lon":output['lon'], 'name':output['display_name']}
-                break
-        counter = counter + 1
-        if counter % step == 0:
-            done_percentage = done_percentage + 1
-            print("Collected " + str(done_percentage) + "%h so far")
+    else:
+        print('enter procedure')
+        geolocator = Nominatim(user_agent="example app")
+        plz_dict = get_plz_city_district()
+        locations = []
+        stepsize = 2500
+        buckets = range(stepsize,100001,stepsize)
+        locations = dict.fromkeys(buckets)
+        for i in locations.keys():
+            locations[i] = {}
+
+        counter = 0
+        total = len(plz_dict.keys())
+        step = round(total / 100,0)
+        done_percentage = 0
+        for i in plz_dict.keys():
+            for j in locations.keys():
+                if int(i) < j:
+                    search = i + ", Deutschland"
+                    output = geolocator.geocode(search).raw
+                    locations[j][int(i)] = {"lat":output['lat'], "lon":output['lon'], 'name':output['display_name']}
+                    break
+            counter = counter + 1
+            if counter % step == 0:
+                done_percentage = done_percentage + 1
+                print("Collected " + str(done_percentage) + "%h so far")
 
 
 
-    print(locations)
+        print(locations)
 
-    pickle.dump(locations, open("locations.p", "wb"))
+        pickle.dump(locations, open(filePath, "wb"))
+    return locations
 
 
 def get_population_by_district() -> dict():
@@ -124,7 +131,7 @@ def get_distributor_locations() -> dict():
         distributor_locations = pickle.load(open(filePath, "rb"))
     else:
         distributor_locations = {}
-        locations = pickle.load(open("locations.p", "rb"))
+        locations = get_distributor_locations_google()
 
         for i in locations.keys():
             sum_lat = sum(float(locations[i][j]["lat"]) for j in locations[i].keys())
@@ -313,7 +320,7 @@ def get_distance_recycling_manufacturer(recycling_stations):
 
 
 def get_google_maps_key():
-    key = ''
+    key = 'AIzaSyClf1sM00h5sCAnho2-qrTyl93o_PWnUdw'
     if key == '':
         print('Please Enter a Key to use Google Maps plug in')
         raise ValueError
