@@ -7,3 +7,4 @@ Optimization Focus:
 - Multi Objective
 - Stochastic Mixed Integer Model
 - Implemented with Grubi
+- Real-World Location Distances, retrieved with google API
