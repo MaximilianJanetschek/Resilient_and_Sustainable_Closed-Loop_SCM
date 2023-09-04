@@ -1,2 +1,8 @@
-gurobipy==9.1.2
-numpy==1.20.3
+gurobipy>=10.0.2
+pandas>=2.1.0
+numpy>=1.25.2
+matplotlib>=3.7.2
+googlemaps>=4.10.0
+geopy>=2.4.0
+networkx>=3.1
+folium>=0.14.0

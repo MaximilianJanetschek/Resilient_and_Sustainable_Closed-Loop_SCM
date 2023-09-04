@@ -320,7 +320,7 @@ def get_distance_recycling_manufacturer(recycling_stations):
 
 
 def get_google_maps_key():
-    key = 'AIzaSyClf1sM00h5sCAnho2-qrTyl93o_PWnUdw'
+    key = ''
     if key == '':
         print('Please Enter a Key to use Google Maps plug in')
         raise ValueError
